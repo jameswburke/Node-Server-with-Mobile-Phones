@@ -1,0 +1,10 @@
+#mainCanvas{
+  border: 1px solid black;
+  margin: auto;
+}
+
+#wrapper{
+  margin: auto;
+  text-align: center;
+  width: 100%;
+}

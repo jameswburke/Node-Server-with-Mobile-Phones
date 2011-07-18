@@ -1,0 +1,115 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Mobile Page</title>
+
+</head>
+<body>
+  <div id="wrapper">
+    <h1 id="join">Game is running</h1>
+    <p id="error"></p>
+</div>
+
+	
+
+</body>
+</html>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script type="text/javascript">
+	var socket = io.connect('http://192.168.2.7');
+        var registered = false;
+        //When a user connects with a mobile phone
+
+        function getUrlVars() {
+	  var vars = {};
+	  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+		vars[key] = value;
+          });
+	  return vars;
+        }
+
+socket.emit('connect mobile', { room: getUrlVars()["id"]}, function(data){
+    if(data.registered = true){
+      registered = true;
+    }else{
+      $('#error').append(data.error);
+    }
+});
+
+
+	init3();
+	var count = 0;
+
+	function init() {
+		if (window.DeviceOrientationEvent) {
+			console.log("DeviceOrientation is supported on this device");
+		} else if (window.OrientationEvent) {
+			console.log("DeviceOrientation is supported on this device via MozOrientation");
+		}
+	}
+		
+	function init2() {
+		if (window.DeviceOrientationEvent) {
+			// Listen for the deviceorientation event and handle DeviceOrientationEvent object
+			window.addEventListener('deviceorientation', devOrientHandler, false);
+		} else if (window.OrientationEvent) {
+			// Listen for the MozOrientation event and handle OrientationData object
+			window.addEventListener('MozOrientation', mozDevOrientHandler, false);
+		}
+	}
+		
+	function init3() {
+		if (window.DeviceOrientationEvent) {
+			// Listen for the deviceorientation event and handle the raw data
+			window.addEventListener('deviceorientation', function(eventData) {
+				// gamma is the left-to-right tilt in degrees, where right is positive
+				var tiltLR = eventData.gamma;
+				
+				// beta is the front-to-back tilt in degrees, where front is positive
+				var tiltFB = eventData.beta;
+					
+				// alpha is the compass direction the device is facing in degrees
+				var dir = eventData.alpha
+					
+				// deviceorientation does not provide this data
+				var motUD = null;
+					
+				// call our orientation event handler
+				deviceOrientationHandler(tiltLR, tiltFB, dir, motUD);
+				}, false);
+		} else if (window.OrientationEvent) {
+			window.addEventListener('MozOrientation', function(eventData) {
+				// x is the left-to-right tilt from -1 to +1, so we need to convert to degress
+				var tiltLR = eventData.x * 90;
+					
+				// y is the front-to-back tilt from -1 to +1, so we need to convert to degress
+				// We also need to invert the value so tilting the device towards us (forward) 
+				// results in a positive value. 
+				var tiltFB = eventData.y * -90;
+					
+				// MozOrientation does not provide this data
+				var dir = null;
+					
+				// z is the vertical acceleration of the device
+				var motUD = eventData.z;
+					
+				deviceOrientationHandler(tiltLR, tiltFB, dir, motUD);
+				}, false);
+		} else {
+			document.getElementById("error").innerHTML = "Not supported on your device or browser.  Sorry."
+		}
+	}
+	
+        //Send updated position data
+        function deviceOrientationHandler(tiltLR, tiltFB, dir, motionUD) {
+
+                if(registered){
+                  socket.emit('update movement', { tilt_LR: Math.round(tiltLR), tilt_FB: Math.round(tiltFB)});
+                }
+        }
+</script>
